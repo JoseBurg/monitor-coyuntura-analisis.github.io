@@ -45,7 +45,10 @@ jobs:
             Rscript -e 'if (!requireNamespace("renv", quietly=TRUE)) install.packages("renv", repos="https://cran.rstudio.com"); renv::restore()'
           else
             Rscript -e 'install.packages(c("tidyverse","openxlsx","writexl"), repos="https://cran.rstudio.com")'
-
+      
+      - name: Run functions.R
+        run: Rscript functions.R
+      
       - name: Run save_excel.R
         run: Rscript save_excel.R
         # Si tu script necesita variables de entorno o credenciales, añádelas así:

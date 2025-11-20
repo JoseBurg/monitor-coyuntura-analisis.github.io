@@ -55,6 +55,7 @@ jobs:
             Rscript -e 'if (!requireNamespace("renv", quietly=TRUE)) install.packages("renv", repos="https://cran.rstudio.com"); renv::restore()'
           else
             Rscript -e 'install.packages(c("tidyverse","openxlsx","writexl","tidyr","checkmate"), repos="https://cran.rstudio.com")'
+            fi
 
       - name: Run save_excel.R (verbose)
         id: run_script

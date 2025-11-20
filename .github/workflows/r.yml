@@ -7,7 +7,8 @@ on:
     paths-ignore:
       - 'data/**'           # evita que commits que sólo cambian data/ vuelvan a disparar el workflow
   schedule:
-    - cron: '0 6 * * *'     # diariamente a las 06:00 UTC (ajusta si quieres otro horario)
+    - cron: '0 14 * * *'     # diariamente a las 06:00 UTC (ajusta si quieres otro horario)
+    - cron: '0 20 * * *'     # diariamente a las 06:00 UTC (ajusta si quieres otro horario)
   workflow_dispatch: {}     # permite ejecución manual desde la UI
 
 permissions:

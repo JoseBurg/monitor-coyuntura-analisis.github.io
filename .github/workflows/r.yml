@@ -4,12 +4,14 @@ name: Ejecutar save_excel.R
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'data/**'           # evita que commits que sólo cambian data/ vuelvan a disparar el workflow
   schedule:
-    - cron: '0 6 * * *'   # diariamente a las 06:00 UTC (ajusta si quieres otro horario)
-  workflow_dispatch: {}   # permite ejecución manual desde la UI
+    - cron: '0 6 * * *'     # diariamente a las 06:00 UTC (ajusta si quieres otro horario)
+  workflow_dispatch: {}     # permite ejecución manual desde la UI
 
 permissions:
-  contents: write    # necesario si quieres commitear cambios de vuelta
+  contents: write           # necesario si quieres commitear cambios de vuelta
 
 jobs:
   run-save-excel:
@@ -21,6 +23,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Show repo files (debug)
+        run: |
+          pwd
+          ls -la
+
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
@@ -30,6 +37,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/R
+          # si no tienes renv.lock, la clave puede incluir una cadena vacía; es aceptable gracias a restore-keys
           key: ${{ runner.os }}-r-${{ hashFiles('**/renv.lock') }}
           restore-keys: |
             ${{ runner.os }}-r-
@@ -37,29 +45,50 @@ jobs:
       - name: Install system dependencies (si los necesitas)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxml2-dev libssl-dev libcurl4-openssl-dev
+          sudo apt-get install -y libxml2-dev libssl-dev libcurl4-openssl-dev libzip-dev
+          # Si usas rJava, descomenta:
+          # sudo apt-get install -y default-jdk
 
       - name: Install R packages (renv if available, otherwise CRAN)
         run: |
           if [ -f renv.lock ]; then
             Rscript -e 'if (!requireNamespace("renv", quietly=TRUE)) install.packages("renv", repos="https://cran.rstudio.com"); renv::restore()'
           else
-            Rscript -e 'install.packages(c("tidyverse","openxlsx","writexl", "utils", "tidyr", "checkmate"), repos="https://cran.rstudio.com")'
-      
-      - name: Run save_excel.R
+            Rscript -e 'install.packages(c("tidyverse","openxlsx","writexl","tidyr","checkmate"), repos="https://cran.rstudio.com")'
+
+      - name: Run save_excel.R (verbose)
+        id: run_script
         run: |
-          Rscript "save_excel.R"
+          echo "Working dir: $(pwd)"
+          Rscript --vanilla --verbose save_excel.R
         # Si tu script necesita variables de entorno o credenciales, añádelas así:
         # env:
-        #   MY_SECRET: ${{ secrets.MY_SECRET }}
+        #   GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
+
+      - name: Prepare git config
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for data changes
+        id: git-check
+        run: |
+          # Busca cambios en la carpeta data/ (ajusta la ruta si es otra)
+          git add -A
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit changed data files (opcional)
-        if: always()    # intenta commitear aunque haya fallos en pasos anteriores; ajusta según prefieras
+        if: steps.git-check.outputs.changed == 'true'
         uses: EndBug/add-and-commit@v9
         with:
           author_name: github-actions[bot]
           author_email: 41898282+github-actions[bot]@users.noreply.github.com
           message: "chore: actualizar datos vía save_excel.R"
-          add: "data/**"    # ajusta la ruta de los archivos que quieras añadir/commitear
+          add: "data/**"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

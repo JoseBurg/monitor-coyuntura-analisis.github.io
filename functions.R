@@ -113,4 +113,4 @@ get_imae <- function (variaciones = TRUE) {
 
 
 # Instalar databcrd
-devtools::install_github("https://github.com/Johan-rosa/databcrd")
+# devtools::install_github("https://github.com/Johan-rosa/databcrd")

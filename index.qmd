@@ -16,10 +16,10 @@ library(scales)
 library(highcharter)
 library(readxl)
 library(DT)
-source("../functions.R")
+source("functions.R")
 #---------------- DATOS ----------------#
 
-full_datos <- read_excel("../data-coyuntura.xlsx") |>
+full_datos <- read_excel("data-coyuntura.xlsx") |>
   mutate(
     across(-periodo, ~round(.x, 2)),
     periodo = as.Date(periodo)

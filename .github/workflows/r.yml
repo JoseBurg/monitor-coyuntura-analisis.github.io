@@ -64,14 +64,11 @@ jobs:
           echo "Working dir: $(pwd)"
           Rscript --vanilla --verbose save_excel.R
      
-      - name: Run report
+      - name: Run index.qmd (verbose)
         id: run_script
         run: |
           echo "Working dir: $(pwd)"
           Rscript --vanilla --verbose index.qmd
-        # Si tu script necesita variables de entorno o credenciales, añádelas así:
-        # env:
-        #   GOOGLE_SERVICE_JSON: ${{ secrets.GOOGLE_SERVICE_JSON }}
 
       - name: Prepare git config
         if: always()

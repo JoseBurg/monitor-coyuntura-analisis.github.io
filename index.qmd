@@ -127,7 +127,7 @@ htmltools::div(
 ### IPC-USA
 ```{r}
 
-ipc_usa <- CORESTICKM159SFRBATL
+# ipc_usa <- CORESTICKM159SFRBATL
 ```
 
 :::

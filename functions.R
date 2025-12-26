@@ -12,14 +12,14 @@
 #' - Identifica en la página oficial el enlace del archivo Excel más reciente.
 #' - Descarga temporalmente el archivo.
 #' - Lee y limpia los datos aplicando los nombres de columnas correspondientes.
-#' - Construye una variable de fecha ("periodo") desde 2014-01 en adelante.
+#' - Construye una variable de fecha ("fecha") desde 2014-01 en adelante.
 #'
 #' @param manufactura Logical. Si `TRUE` (por defecto), descarga el IPP de 
 #' industrias manufactureras. Si `FALSE`, descarga el IPP de servicios.
 #'
 #' @return Un data frame con las siguientes columnas:
 #' \describe{
-#'   \item{periodo}{Fecha en formato `Date` correspondiente a cada observación.}
+#'   \item{fecha}{Fecha en formato `Date` correspondiente a cada observación.}
 #'   \item{year}{Año reportado en el archivo.}
 #'   \item{mes}{Mes reportado (texto).}
 #'   \item{ipp_manufactura / ipp_servicio}{Índice de Precios del Productor.}
@@ -76,7 +76,7 @@ get_ipp <- function(manufactura = TRUE){
     dplyr::mutate(
       dplyr::across(c(year, vi), as.numeric),
       mes = stringr::str_remove(mes, "R$"),
-      periodo = seq(as.Date("2014-01-01"), 
+      fecha = seq(as.Date("2014-01-01"), 
                     by = "month", length.out = dplyr::n()),
       .before = year) |> 
     na.omit() |> 
@@ -120,19 +120,19 @@ grafica_highcharts <- function(full_datos, variable_seleccionada) {
     stop("La variable seleccionada no existe en el dataframe")
   }
   datos <- full_datos |>
-    select(periodo, valor = all_of(variable_seleccionada))
+    select(fecha, valor = all_of(variable_seleccionada))
   
   # Crear gráfico
  highcharter::highchart() |>
    highcharter::hc_add_series(
       datos,
       type = "line",
-      highcharter::hcaes(x = periodo, y = valor),
+      highcharter::hcaes(x = fecha, y = valor),
       name = variable_seleccionada
     ) |>
     # highcharter::hc_title(text = paste("Serie:", variable_seleccionada)) |>
     highcharter::hc_xAxis(
-      title = list(text = "Periodo"),
+      title = list(text = "fecha"),
       type = "datetime",
       labels = list(format = "{value:%b %Y}")
     ) |>
@@ -145,10 +145,10 @@ grafica_highcharts <- function(full_datos, variable_seleccionada) {
 tabla_variaciones_html <- function(data, variable) {
 
   df <- data |>
-    dplyr::select(periodo, valor = dplyr::all_of(variable)) |>
-    dplyr::arrange(periodo) |>
+    dplyr::select(fecha, valor = dplyr::all_of(variable)) |>
+    dplyr::arrange(fecha) |>
     dplyr::mutate(
-      periodo = format(periodo, format = "%b %Y"),
+      fecha = format(fecha, format = "%b %Y"),
       mes_anterior   = lag(valor, 1),
       anio_anterior  = lag(valor, 12),
       var_mensual    = (valor / mes_anterior - 1),

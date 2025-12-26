@@ -33,10 +33,7 @@ full_datos <- read_excel("data-coyuntura.xlsx") |>
 
 `r paste("Actualización:", max(full_datos$periodo))`
 
-
-
 ## Entorno Nacional
-
 
 ::: {.panel-tabset .nav-pills}
 ### IPP Servicio
@@ -129,15 +126,11 @@ htmltools::div(
 )
 ```
 
-
 ```{r}
 
 # ipc_usa <- CORESTICKM159SFRBATL
 ```
-
-
 :::
-
 
 <a href="data-coyuntura.xlsx" download> <button class="btn btn-primary"> <i class="bi bi-download"></i> Descargar Excel </button> </a>
 
@@ -168,17 +161,8 @@ htmltools::div(
 | **PMI Servicios EEUU** | [S&P Global](https://www.pmi.spglobal.com/Public/Home/PressRelease/2e4923c8117a4397a6d6a907dd3e6df2) |
 | **FED Inflation Expectations** | [NY Fed Research](https://www.newyorkfed.org/newsevents/news/research/2025/20251107) |
 
-<a href="data-coyuntura.xlsx" download>
-<button class="btn btn-primary">
-<i class="bi bi-download"></i> Descargar datos
-</button>
-</a>
-
+<a href="data-coyuntura.xlsx" download> <button class="btn btn-primary"> <i class="bi bi-download"></i> Descargar datos </button> </a>
 
 # Fuentes
 
 # Blog de noticias
-
-
-
-

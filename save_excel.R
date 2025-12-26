@@ -3,34 +3,93 @@ library(openxlsx)
 source("functions.R")
 
 
-datos_ipp <- get_ipp()[,c(1, 4)] |> 
-  dplyr::bind_cols(
-    get_ipp(FALSE)[,4]
+# Indices ----------------------------------------------------------------------
+indices <- list(
+  #               IPPs ------------------------------
+  datos_ipp <- get_ipp()[,c(1, 4)] |> 
+    dplyr::bind_cols(
+      get_ipp(FALSE)[,4]
+    ),       
+  
+    # IPC -----------------------------------------
+  ipc <- databcrd::get_ipc_data(desagregacion = "subyacente") |> 
+    dplyr::select(fecha, ipc_subyacente) |> 
+      dplyr::left_join(
+    databcrd::get_ipc_data(desagregacion = "general") |> 
+      dplyr::select(fecha, ipc)
+  ),
+    
+  # IMAE ---------------------------------------
+    imae <- get_imae() |>
+      dplyr::select(fecha, imae = indice_original)
+      
+)
+
+
+indices <- purrr::reduce(indices, left_join) |> 
+  dplyr::mutate(
+    dplyr::across(
+      -fecha,
+      list(
+        vi = ~((.x/lag(.x, n = 12)) - 1) * 100,
+        vm = ~((.x/lag(.x)) - 1) * 100
+      )
+    )
+)
+
+
+prestamos <- databcrd::get_prestamos_osd()
+
+prestamos_sectores_consolidado <- prestamos |> 
+  tidyr::pivot_wider(
+    id_cols = fecha, 
+    names_from = sectores, 
+    values_from = consolidado
   )
 
-full_datos <- get_imae() |> 
-  dplyr::select(periodo = fecha, imae = indice_original) |> 
-  dplyr::left_join(datos_ipp) |> 
-  suppressMessages()
+prestamos_incidencia_total <- prestamos |>  
+  summarise(
+    across(
+      c(mn, me, consolidado),
+      sum
+    ), 
+  .by = fecha) |>
+  mutate(
+    across(-fecha,
+     list(
+       vm = ~((.x/lag(.x))-1) * 100,
+       vi = ~((.x/lag(.x, n = 12))-1) * 100
+     ))) |> 
+  rowwise() |> 
+  mutate(
+    across(
+      c(mn, me),
+      list(
+        incidencia = ~.x/consolidado
+      )
+    )
+  )
 
-  
+prestamos_todos <- prestamos_sectores_consolidado |> 
+  dplyr::left_join(prestamos_incidencia_total)
+
 
 datos_coyuntura <- createWorkbook()
-addWorksheet(datos_coyuntura, "datos")
-openxlsx::freezePane(datos_coyuntura, "datos",  firstRow = TRUE, firstCol = TRUE)
-style_col_names <- openxlsx::createStyle(
-    textDecoration = "bold", 
-    fgFill = "#ced4da",
-    fontSize = 12,
-    halign = "center",
-    valign = "center")
+addWorksheet(datos_coyuntura, "índices")
+addWorksheet(datos_coyuntura, "préstamos")
 
-dim_data <- dim(full_datos)
+sheets <- list(
+  "índices", "préstamos"
+)
 
-openxlsx::addStyle(datos_coyuntura, "datos", style = style_col_names, rows = 1, cols = 1:dim_data[2])
+purrr::map(
+  sheets,
+  \(x) openxlsx::freezePane(datos_coyuntura, x,  firstRow = TRUE, firstCol = TRUE)
+)
 
 
-writeData(datos_coyuntura, "datos", full_datos)
+writeData(datos_coyuntura, "índices", indices)
+writeData(datos_coyuntura, "préstamos", prestamos_todos)
 
 saveWorkbook(datos_coyuntura, file = "data-coyuntura.xlsx", overwrite = TRUE)
 
